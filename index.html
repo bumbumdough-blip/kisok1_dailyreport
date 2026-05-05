@@ -23,6 +23,7 @@ input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-
 .hd-brand{font-size:14px;font-weight:700;color:var(--pk-l)}
 .hd-time{font-size:13px;color:var(--pk-ll);font-weight:700}
 .hd-date{font-size:10px;color:var(--mu)}
+.store-wrap{padding:7px 12px;background:var(--sf);border-bottom:1px solid var(--bd)}
 
 .cp-wrap{padding:8px 12px;background:var(--sf);border-bottom:1px solid var(--bd)}
 .cp-sub{font-size:10px;color:var(--mu);margin-bottom:5px}
@@ -114,10 +115,19 @@ textarea:focus{outline:none;border-color:var(--pk)}
 
 <div class="hd">
   <div class="hd-top">
-    <div class="hd-brand">BBD — Kiosk No.1</div>
+    <div class="hd-brand">BBD — Kiosk</div>
     <div class="hd-time" id="liveTime"></div>
   </div>
   <div class="hd-date" id="liveDate"></div>
+</div>
+
+<div class="store-wrap" id="storeWrap">
+  <div style="display:flex;align-items:center;gap:8px">
+    <span style="font-size:11px;color:var(--mu);white-space:nowrap">หน้าร้าน</span>
+    <input id="storeName" type="text" placeholder="เช่น แฟชั่นไอส์แลนด์ · สาขา 1"
+      style="flex:1;padding:6px 10px;background:var(--card);border:1px solid var(--bd);border-radius:8px;color:var(--cr);font-size:12px;font-family:inherit"
+      oninput="saveStore()" value="">
+  </div>
 </div>
 
 <div class="cp-wrap">
@@ -225,19 +235,32 @@ var CPS=[
 
 var MENU={
   core:[
-    {id:"honey",  name:"Honey Glazed",       price:45,color:"#C88020",type:"ring"},
-    {id:"berry",  name:"Boraberry",           price:79,color:"#C060A0",type:"filled"},
-    {id:"straw",  name:"Strawberry CC",       price:79,color:"#E04060",type:"filled"},
-    {id:"ganache",name:"Ganache Au Chocolat", price:79,color:"#6B3A1F",type:"filled"},
-    {id:"shio",   name:"Messy Shio Brown",    price:79,color:"#C0A040",type:"filled"},
+    {id:"honey",   name:"ฮันนี่ เกลซ",          price:45,color:"#C88020",type:"ring"},
+    {id:"berry",   name:"โบราเบอร์รี่",           price:79,color:"#C060A0",type:"filled"},
+    {id:"straw",   name:"สตรอว์เบอร์รี่ ครีมชีส", price:79,color:"#E04060",type:"filled"},
+    {id:"rot2",   name:"ช็อกโกแลต ริง",           price:55,color:"#7A5A30",type:"ring"},
+    {id:"shio",    name:"เมสซี่ ชิโอ บราวน์",     price:79,color:"#C0A040",type:"filled"},
   ],
   rotating:[
-    {id:"rot1",name:"Pink Rainbow",  price:55,color:"#E080B0",type:"ring"},
-    {id:"rot2",name:"Chocolate Ring",price:55,color:"#4A2A10",type:"ring"},
-    {id:"rot3",name:"Super Lemon",   price:79,color:"#D0C020",type:"filled"},
+    {id:"rot1",  name:"พิ้งค์ เรนโบว์",          price:55,color:"#E080B0",type:"ring"},
+    {id:"ganache",name:"กานาช โอ ช็อกโกแลต",     price:79,color:"#6B3A1F",type:"filled"},
+    {id:"rot3",  name:"ซุปเปอร์ เลมอน",           price:79,color:"#D0C020",type:"filled"},
+    {id:"rot4",  name:"พีนัทบัตเตอร์ อัลมอนด์",  price:79,color:"#C09040",type:"filled"},
+    {id:"rot5",  name:"บีแอนด์ดับเบิลยู โอรีโอ",  price:79,color:"#505050",type:"filled"},
+    {id:"rot6",  name:"พิสตาชิโอ เฟอิทีน",        price:79,color:"#6A9040",type:"filled"},
+    {id:"rot7",  name:"เอิร์ล เกรย์",             price:55,color:"#8080A0",type:"ring"},
+    {id:"rot8",  name:"เมเปิล แอนด์ เบคอน",       price:65,color:"#A05020",type:"filled"},
+    {id:"rot9",  name:"ลิ้นจี่ โรส",              price:79,color:"#E060A0",type:"filled"},
+    {id:"rot10", name:"เอสเปรสโซ่ ริง",           price:55,color:"#3A2010",type:"ring"},
+    {id:"rot11", name:"บิลเดอร์ ที เกลซ",         price:55,color:"#C09060",type:"ring"},
+    {id:"rot12", name:"บลูเบอร์รี่ คอมโพท",       price:79,color:"#4040A0",type:"filled"},
   ],
   drop:[
-    {id:"drop1",name:"No.29 Cheese Brulee",price:79,color:"#F0C040",type:"filled"},
+    {id:"drop1",name:"โน.29 ชีส บรูเล่",         price:79,color:"#F0C040",type:"filled"},
+    {id:"drop2",name:"เดอร์ตี้ คอฟฟี่",           price:79,color:"#5A3010",type:"filled"},
+    {id:"drop3",name:"แบล็ค ทรัฟเฟิล",            price:89,color:"#2A2A2A",type:"filled"},
+    {id:"drop4",name:"เวรี่ มัทชา",               price:79,color:"#507030",type:"filled"},
+    {id:"drop5",name:"กาบา ครีม",                 price:79,color:"#A0C080",type:"filled"},
   ],
 };
 
@@ -246,6 +269,14 @@ var S=load(),curCP=CPS[0],curTr="",curB2="",curQty="";
 function load(){try{var s=JSON.parse(localStorage.getItem("bbd4")||"{}");if(s.date!==new Date().toDateString())return fresh();return s;}catch(e){return fresh();}}
 function fresh(){return{date:new Date().toDateString(),rem:{},batch:0};}
 function save(){localStorage.setItem("bbd4",JSON.stringify(S));}
+
+function saveStore(){
+  var v=el("storeName")?el("storeName").value:"";
+  localStorage.setItem("bbd_store",v);
+}
+function getStore(){
+  return localStorage.getItem("bbd_store")||"ไม่ระบุสาขา";
+}
 
 function tick(){
   var n=new Date();
@@ -294,8 +325,9 @@ function renderMenus(){
   renderList("rotList",MENU.rotating);
   el("rotBadge").textContent=MENU.rotating.length+" รส";
   var wd=[5,6,0].includes(new Date().getDay());
-  el("dropSec").style.display=wd&&MENU.drop.length?"":"none";
-  if(wd&&MENU.drop.length){renderList("dropList",MENU.drop);el("dropBadge").textContent=MENU.drop.length+" รส";}
+  var showDrop = wd && MENU.drop.length > 0;
+  el("dropSec").style.display = showDrop ? "" : "none";
+  if(showDrop){renderList("dropList",MENU.drop);el("dropBadge").textContent=MENU.drop.length+" รส";}
 }
 
 function renderList(listId,items){
@@ -329,11 +361,7 @@ function onRem(id,val){
   if(card) card.className="fc"+(v===0?" out":(v!==null&&v<=T_OK?" warn":""));
   if(flag){flag.className="ff "+f.cls;flag.textContent=f.txt;}
   if(bar)  bar.style.width=Math.round(pct*100)+"%";
-  if(curCP.id==="c1") // แสดง batch ที่ lock ไว้ (ถ้ามี)
-var _locked=S.batchLocked||S.batch||0;
-el("bIn").textContent=_locked||"—";
-if(_locked) el("bHint").innerHTML='ยอดรับจากรอบ 10:00: <b>'+_locked+'</b> ชิ้น (ล็อกแล้ว)';
-calcSummary();
+  if(curCP.id==="c1") 
   calcSummary();
 }
 
@@ -408,7 +436,7 @@ function buildRpt(){
 
 function openRpt(){
   var d=buildRpt();
-  el("moSub").textContent=el("liveDate").textContent+" · "+curCP.lbl;
+  el("moSub").textContent=getStore()+" · "+el("liveDate").textContent+" · "+curCP.lbl;
   var html="";
   d.rows.forEach(function(r){
     var f=getFlag(r.rem);
@@ -420,7 +448,8 @@ function openRpt(){
   el("totL").textContent=d.totR+" ชิ้น";
   el("totS").textContent=d.totS+" ชิ้น";
   var pct=d.batch>0?Math.round(d.totS/d.batch*100)+"%":"—";
-  var txt="รายงาน BBD Kiosk No.1\n";
+  var txt="รายงาน BBD Kiosk\n";
+  txt+="หน้าร้าน: "+getStore()+"\n";
   txt+=el("liveDate").textContent+" · "+curCP.lbl+"\n";
   txt+="─────────────────\n";
   d.rows.forEach(function(r){
@@ -449,7 +478,8 @@ function submit(){
   btn.textContent="กำลังส่ง...";btn.disabled=true;
   fetch(SHEETS_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},
     body:JSON.stringify({date:el("liveDate").textContent,time:el("liveTime").textContent,
-      checkpoint:curCP.lbl,batchReceived:d.batch,totalSold:d.totS,totalRemaining:d.totR,
+      store:getStore(),checkpoint:curCP.lbl,batchReceived:d.batch,
+      totalSold:d.totS,totalRemaining:d.totR,
       sellThrough:d.batch>0?Math.round(d.totS/d.batch*100):0,remaining:S.rem,
       traffic:curTr,batch2Decision:curB2,batch2Qty:curQty,
       observation:el("obs").value,tomorrowBatch:Math.round(d.totS*1.2),
