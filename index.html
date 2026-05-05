@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>BBD Counter</title>
+<style>
+:root {
+  --bg: #0E0A06;
+  --surface: #1C1208;
+  --card: #241608;
+  --border: #3A2010;
+  --gold: #C88020;
+  --gold-l: #F0C060;
+  --cream: #FAF0DC;
+  --muted: #7A5A30;
+  --green: #2A9C6A;
+  --green-d: #1A5C3A;
+  --red: #C04040;
+  --amber: #C07820;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body {
+  background: var(--bg);
+  color: var(--cream);
+  font-family: -apple-system, 'Sarabun', sans-serif;
+  font-size: 14px;
+  min-height: 100vh;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+/* HEADER */
+.header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header-brand {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--gold-l);
+}
+.header-date {
+  font-size: 11px;
+  color: var(--muted);
+}
+.header-total {
+  text-align: right;
+}
+.header-total-num {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--gold-l);
+  line-height: 1;
+}
+.header-total-label {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+/* CHECKPOINT BAR */
+.cp-bar {
+  display: flex;
+  gap: 0;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.cp-btn {
+  flex: 1;
+  padding: 8px 4px;
+  font-size: 11px;
+  color: var(--muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: center;
+  border-bottom: 2px solid transparent;
+  transition: all .15s;
+}
+.cp-btn.active {
+  color: var(--gold-l);
+  border-bottom-color: var(--gold);
+  background: rgba(200,128,32,0.08);
+}
+
+/* SUMMARY BAR */
+.summary-bar {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 1px;
+  background: var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.summary-cell {
+  background: var(--surface);
+  padding: 8px 12px;
+  text-align: center;
+}
+.summary-val {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+.summary-label {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+/* SECTION */
+.section-title {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  padding: 10px 16px 6px;
+}
+
+/* FLAVOR CARDS */
+.flavor-grid {
+  padding: 0 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.flavor-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.flavor-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.flavor-info {
+  flex: 1;
+  min-width: 0;
+}
+.flavor-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cream);
+  margin-bottom: 2px;
+}
+.flavor-meta {
+  font-size: 11px;
+  color: var(--muted);
+}
+.flavor-stock-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+}
+.flavor-stock-label {
+  font-size: 10px;
+  color: var(--muted);
+}
+.flavor-stock-bar {
+  flex: 1;
+  height: 4px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.flavor-stock-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width .3s;
+}
+.flavor-stock-num {
+  font-size: 11px;
+  font-weight: 600;
+  min-width: 28px;
+  text-align: right;
+}
+
+/* COUNTER CONTROLS */
+.counter-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.cnt-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  font-size: 20px;
+  font-weight: 300;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform .1s, opacity .1s;
+  user-select: none;
+}
+.cnt-btn:active { transform: scale(.88); opacity: .7; }
+.cnt-minus {
+  background: rgba(192,64,64,0.2);
+  color: #E07070;
+  border: 1px solid rgba(192,64,64,0.3);
+}
+.cnt-plus {
+  background: rgba(42,156,106,0.2);
+  color: #60C090;
+  border: 1px solid rgba(42,156,106,0.3);
+}
+.cnt-num {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--gold-l);
+  min-width: 36px;
+  text-align: center;
+  line-height: 1;
+}
+
+/* ALERT BADGE */
+.alert-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 20px;
+  margin-left: 4px;
+}
+.badge-low { background: rgba(192,120,32,0.2); color: #F0A040; border: 1px solid rgba(192,120,32,0.3); }
+.badge-out { background: rgba(192,64,64,0.2); color: #E07070; border: 1px solid rgba(192,64,64,0.3); }
+.badge-ok  { background: rgba(42,156,106,0.15); color: #60C090; border: 1px solid rgba(42,156,106,0.2); }
+
+/* ACTION BUTTONS */
+.actions {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+.action-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.action-btn {
+  padding: 12px;
+  border-radius: 12px;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity .15s, transform .1s;
+}
+.action-btn:active { opacity: .7; transform: scale(.97); }
+.btn-report {
+  background: var(--gold);
+  color: #1E1008;
+  grid-column: 1/-1;
+  font-size: 14px;
+  padding: 14px;
+}
+.btn-submit {
+  background: rgba(42,156,106,0.25);
+  color: #60C090;
+  border: 1.5px solid rgba(42,156,106,0.5);
+  font-size: 14px;
+  padding: 14px;
+  grid-column: 1/-1;
+}
+.btn-reset {
+  background: rgba(192,64,64,0.15);
+  color: #E07070;
+  border: 1px solid rgba(192,64,64,0.2);
+  font-size: 12px;
+}
+.btn-copy {
+  background: rgba(42,156,106,0.15);
+  color: #60C090;
+  border: 1px solid rgba(42,156,106,0.2);
+  font-size: 12px;
+}
+
+/* TOAST */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--green-d);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: transform .3s;
+  z-index: 999;
+  white-space: nowrap;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+/* MODAL */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 200;
+  align-items: flex-end;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--surface);
+  border-radius: 20px 20px 0 0;
+  border-top: 1px solid var(--border);
+  padding: 20px 16px 36px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+.modal-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--gold-l);
+  margin-bottom: 4px;
+}
+.modal-sub {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+.report-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.report-row:last-of-type { border-bottom: none; }
+.report-name { color: var(--cream); }
+.report-vals {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+}
+.report-sold { color: var(--green); font-weight: 600; }
+.report-left { color: var(--muted); }
+.modal-close {
+  width: 100%;
+  margin-top: 16px;
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+  background: var(--gold);
+  color: #1E1008;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.report-total-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--gold-l);
+  margin-top: 4px;
+}
+.copy-text {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 12px;
+  white-space: pre-wrap;
+  line-height: 1.7;
+  font-family: monospace;
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div>
+    <div class="header-brand">🍩 BBD Counter</div>
+    <div class="header-date" id="headerDate"></div>
+  </div>
+  <div class="header-total">
+    <div class="header-total-num" id="totalSold">0</div>
+    <div class="header-total-label">ขายแล้ว (ชิ้น)</div>
+  </div>
+</div>
+
+<!-- CHECKPOINT -->
+<div class="cp-bar">
+  <button class="cp-btn active" onclick="setCP(this,'🌅 เช้า')">🌅 เช้า</button>
+  <button class="cp-btn" onclick="setCP(this,'☀️ กลางวัน')">☀️ กลางวัน</button>
+  <button class="cp-btn" onclick="setCP(this,'🌆 เย็น')">🌆 เย็น</button>
+</div>
+
+<!-- SUMMARY -->
+<div class="summary-bar">
+  <div class="summary-cell">
+    <div class="summary-val" id="sumReceived" style="color:var(--gold-l)">—</div>
+    <div class="summary-label">รับมาเช้า</div>
+  </div>
+  <div class="summary-cell">
+    <div class="summary-val" id="sumSold" style="color:var(--green)">0</div>
+    <div class="summary-label">ขายแล้ว</div>
+  </div>
+  <div class="summary-cell">
+    <div class="summary-val" id="sumLeft" style="color:var(--amber)">—</div>
+    <div class="summary-label">เหลือ</div>
+  </div>
+</div>
+
+<!-- RECEIVED INPUT -->
+<div style="padding:12px 12px 4px">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:10px">
+    <span style="font-size:11px;color:var(--muted);flex:1">จำนวนที่รับมาจากราม 174 ทั้งหมด</span>
+    <input id="batchInput" type="number" inputmode="numeric"
+      placeholder="เช่น 70"
+      style="width:72px;padding:6px 8px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--gold-l);font-size:16px;font-weight:700;text-align:center"
+      oninput="updateSummary()">
+  </div>
+</div>
+
+<!-- CORE MENU -->
+<div class="section-title">Core Menu — มีตลอด</div>
+<div class="flavor-grid" id="coreGrid"></div>
+
+<!-- ROTATING -->
+<div class="section-title">Rotating Set — วันนี้</div>
+<div class="flavor-grid" id="rotatingGrid"></div>
+
+<!-- WEEKEND DROP -->
+<div class="section-title" id="dropSection" style="display:none">Weekend Drop 🎯</div>
+<div class="flavor-grid" id="dropGrid"></div>
+
+<!-- ACTIONS -->
+<div class="actions">
+  <button class="action-btn btn-submit" onclick="submitToSheets()">📤 ส่ง Sheets + แจ้ง LINE</button>
+  <button class="action-btn btn-report" onclick="openReport()">📋 ดูรายงาน</button>
+  <div class="action-row">
+    <button class="action-btn btn-copy" onclick="copyReport()">📋 Copy LINE</button>
+    <button class="action-btn btn-reset" onclick="confirmReset()">🔄 Reset</button>
+  </div>
+</div>
+
+<!-- REPORT MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-title">📊 รายงาน BBD</div>
+    <div class="modal-sub" id="reportDate"></div>
+    <div id="reportRows"></div>
+    <div class="report-total-row">
+      <span>รวมขายแล้ว</span>
+      <span id="reportTotal"></span>
+    </div>
+    <div class="report-total-row" style="color:var(--amber);font-size:13px">
+      <span>เหลือทั้งหมด</span>
+      <span id="reportLeftTotal"></span>
+    </div>
+    <div class="copy-text" id="copyText"></div>
+    <button class="modal-close" onclick="closeModal()">ปิด</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONFIG ───────────────────────────────────────────────────────
+var SHEETS_URL = "YOUR_WEB_APP_URL_HERE"; // ← ใส่ Web App URL จาก Apps Script
+
+// ── DATA ─────────────────────────────────────────────────────────
+var MENUS = {
+  core: [
+    { id:"honey",      name:"Honey Glazed",         price:45, color:"#C88020", type:"ring" },
+    { id:"boraberry",  name:"Boraberry",             price:79, color:"#C060A0", type:"filled" },
+    { id:"strawberry", name:"Strawberry CC",         price:79, color:"#E04060", type:"filled" },
+    { id:"ganache",    name:"Ganache Au Chocolat",   price:79, color:"#3A2010", type:"filled" },
+    { id:"shio",       name:"Messy Shio Brown",      price:79, color:"#C0A040", type:"filled" },
+  ],
+  rotating: [
+    { id:"r1a", name:"Pink Rainbow",       price:55, color:"#E080B0", type:"ring" },
+    { id:"r1b", name:"Chocolate Ring",     price:55, color:"#4A2A10", type:"ring" },
+    { id:"r1c", name:"Super Lemon",        price:79, color:"#D0C020", type:"filled" },
+  ],
+  drop: [
+    { id:"drop1", name:"No.29 Cheese Brulee", price:79, color:"#F0C040", type:"filled" },
+  ],
+};
+
+var state = loadState();
+var currentCP = "🌅 เช้า";
+
+// ── INIT ─────────────────────────────────────────────────────────
+function init() {
+  document.getElementById("headerDate").textContent = getDateStr();
+  renderGrid("coreGrid", MENUS.core);
+  renderGrid("rotatingGrid", MENUS.rotating);
+
+  var isWeekend = [5,6,0].includes(new Date().getDay()); // Fri Sat Sun
+  if (isWeekend) {
+    document.getElementById("dropSection").style.display = "";
+    renderGrid("dropGrid", MENUS.drop);
+  }
+  updateSummary();
+}
+
+function getDateStr() {
+  var d = new Date();
+  return d.toLocaleDateString("th-TH", {weekday:"short",day:"numeric",month:"short",year:"2-digit"});
+}
+
+// ── STATE ─────────────────────────────────────────────────────────
+function loadState() {
+  var saved = localStorage.getItem("bbd_state");
+  if (saved) {
+    var s = JSON.parse(saved);
+    // reset ถ้าวันใหม่
+    if (s.date !== new Date().toDateString()) return freshState();
+    return s;
+  }
+  return freshState();
+}
+function freshState() {
+  var s = { date: new Date().toDateString(), counts: {} };
+  return s;
+}
+function saveState() {
+  localStorage.setItem("bbd_state", JSON.stringify(state));
+}
+
+// ── RENDER ─────────────────────────────────────────────────────────
+function renderGrid(gridId, items) {
+  var grid = document.getElementById(gridId);
+  grid.innerHTML = "";
+  items.forEach(function(item) {
+    var sold = state.counts[item.id] || 0;
+    var batch = parseInt(document.getElementById("batchInput")?.value) || 0;
+    var maxPerSKU = batch > 0 ? Math.round(batch / getAllMenus().length) : 0;
+    var left = maxPerSKU > 0 ? Math.max(maxPerSKU - sold, 0) : "—";
+    var pct = maxPerSKU > 0 ? sold / maxPerSKU : 0;
+    var badgeClass = left === 0 ? "badge-out" : (pct > 0.8 ? "badge-low" : "badge-ok");
+    var badgeText  = left === 0 ? "หมด" : (pct > 0.8 ? "เหลือน้อย" : "ปกติ");
+
+    var card = document.createElement("div");
+    card.className = "flavor-card";
+    card.id = "card_" + item.id;
+    card.innerHTML =
+      '<div class="flavor-dot" style="background:'+item.color+'"></div>' +
+      '<div class="flavor-info">' +
+        '<div class="flavor-name">' + item.name +
+          '<span class="alert-badge '+badgeClass+'" id="badge_'+item.id+'">'+badgeText+'</span>' +
+        '</div>' +
+        '<div class="flavor-meta">฿'+item.price+' · '+item.type+'</div>' +
+        '<div class="flavor-stock-row">' +
+          '<span class="flavor-stock-label">ขาย</span>' +
+          '<div class="flavor-stock-bar"><div class="flavor-stock-fill" id="bar_'+item.id+'" style="width:'+Math.min(pct*100,100)+'%;background:'+item.color+'"></div></div>' +
+          '<span class="flavor-stock-num" id="sold_'+item.id+'" style="color:'+item.color+'">'+sold+'</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="counter-wrap">' +
+        '<button class="cnt-btn cnt-minus" onclick="adjust(\''+item.id+'\',-1)">−</button>' +
+        '<div class="cnt-num" id="cnt_'+item.id+'">'+sold+'</div>' +
+        '<button class="cnt-btn cnt-plus" onclick="adjust(\''+item.id+'\',1)">+</button>' +
+      '</div>';
+    grid.appendChild(card);
+  });
+}
+
+function getAllMenus() {
+  return MENUS.core.concat(MENUS.rotating).concat(MENUS.drop);
+}
+
+// ── ADJUST COUNT ──────────────────────────────────────────────────
+function adjust(id, delta) {
+  var current = state.counts[id] || 0;
+  var next = Math.max(0, current + delta);
+  state.counts[id] = next;
+  saveState();
+  updateCard(id, next);
+  updateSummary();
+  if (delta > 0) vibrate();
+}
+
+function vibrate() {
+  if (navigator.vibrate) navigator.vibrate(30);
+}
+
+function updateCard(id, sold) {
+  var batch = parseInt(document.getElementById("batchInput")?.value) || 0;
+  var allMenus = getAllMenus();
+  var maxPerSKU = batch > 0 ? Math.round(batch / allMenus.length) : 0;
+  var left = maxPerSKU > 0 ? Math.max(maxPerSKU - sold, 0) : null;
+  var pct = maxPerSKU > 0 ? sold / maxPerSKU : 0;
+
+  var cntEl   = document.getElementById("cnt_"+id);
+  var soldEl  = document.getElementById("sold_"+id);
+  var barEl   = document.getElementById("bar_"+id);
+  var badgeEl = document.getElementById("badge_"+id);
+
+  if (cntEl)  cntEl.textContent  = sold;
+  if (soldEl) soldEl.textContent = sold;
+  if (barEl)  barEl.style.width  = Math.min(pct*100,100)+"%";
+  if (badgeEl) {
+    if (left === 0) {
+      badgeEl.className = "alert-badge badge-out";
+      badgeEl.textContent = "หมด";
+    } else if (pct > 0.8) {
+      badgeEl.className = "alert-badge badge-low";
+      badgeEl.textContent = "เหลือน้อย";
+    } else {
+      badgeEl.className = "alert-badge badge-ok";
+      badgeEl.textContent = "ปกติ";
+    }
+  }
+}
+
+// ── SUMMARY ───────────────────────────────────────────────────────
+function updateSummary() {
+  var totalSold = 0;
+  Object.values(state.counts).forEach(function(v){ totalSold += v; });
+
+  var batch = parseInt(document.getElementById("batchInput")?.value) || 0;
+  var left = batch > 0 ? Math.max(batch - totalSold, 0) : "—";
+
+  document.getElementById("totalSold").textContent = totalSold;
+  document.getElementById("sumSold").textContent   = totalSold;
+  document.getElementById("sumReceived").textContent = batch || "—";
+  document.getElementById("sumLeft").textContent   = left;
+
+  // update all cards ถ้า batch เปลี่ยน
+  getAllMenus().forEach(function(item) {
+    updateCard(item.id, state.counts[item.id] || 0);
+  });
+
+  // stock alert color
+  var leftEl = document.getElementById("sumLeft");
+  if (batch > 0) {
+    var pct = totalSold / batch;
+    leftEl.style.color = pct > 0.7 ? "var(--red)" : (pct > 0.5 ? "var(--amber)" : "var(--green)");
+  }
+}
+
+// ── CHECKPOINT ────────────────────────────────────────────────────
+function setCP(btn, label) {
+  document.querySelectorAll(".cp-btn").forEach(function(b){ b.classList.remove("active"); });
+  btn.classList.add("active");
+  currentCP = label;
+}
+
+// ── REPORT MODAL ──────────────────────────────────────────────────
+function openReport() {
+  var totalSold = 0, totalLeft = 0;
+  var batch = parseInt(document.getElementById("batchInput")?.value) || 0;
+  var allMenus = getAllMenus();
+  var maxPerSKU = batch > 0 ? Math.round(batch / allMenus.length) : 0;
+
+  var rows = "";
+  var lineText = "📊 BBD Report — " + getDateStr() + " [" + currentCP + "]\n";
+  lineText += "─────────────────\n";
+
+  allMenus.forEach(function(item) {
+    var sold = state.counts[item.id] || 0;
+    var left = maxPerSKU > 0 ? Math.max(maxPerSKU - sold, 0) : "?";
+    totalSold += sold;
+    if (typeof left === "number") totalLeft += left;
+
+    var leftDisplay = typeof left === "number" ? left + " ชิ้น" : "?";
+    var flag = left === 0 ? " 🔴" : (typeof left === "number" && left <= 2 ? " 🟡" : " 🟢");
+
+    rows += '<div class="report-row">' +
+      '<span class="report-name">'+item.name+'</span>' +
+      '<div class="report-vals">' +
+        '<span class="report-sold">ขาย '+sold+'</span>' +
+        '<span class="report-left">เหลือ '+leftDisplay+'</span>' +
+      '</div></div>';
+
+    lineText += item.name + ": ขาย "+sold+" / เหลือ "+leftDisplay + flag + "\n";
+  });
+
+  lineText += "─────────────────\n";
+  lineText += "รวมขาย: "+totalSold+" ชิ้น\n";
+  lineText += "รวมเหลือ: "+totalLeft+" ชิ้น\n";
+  if (batch > 0) {
+    lineText += "Sell-through: "+Math.round(totalSold/batch*100)+"%\n";
+  }
+  lineText += "💡 Batch พรุ่งนี้: ~"+Math.round(totalSold*1.2)+" ชิ้น";
+
+  document.getElementById("reportDate").textContent = getDateStr() + " · " + currentCP;
+  document.getElementById("reportRows").innerHTML = rows;
+  document.getElementById("reportTotal").textContent = totalSold + " ชิ้น";
+  document.getElementById("reportLeftTotal").textContent = totalLeft + " ชิ้น";
+  document.getElementById("copyText").textContent = lineText;
+  document.getElementById("modalOverlay").classList.add("open");
+}
+
+function closeModal(e) {
+  if (!e || e.target === document.getElementById("modalOverlay")) {
+    document.getElementById("modalOverlay").classList.remove("open");
+  }
+}
+
+// ── COPY ──────────────────────────────────────────────────────────
+function copyReport() {
+  openReport();
+  var text = document.getElementById("copyText").textContent;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(function(){
+      showToast("✅ Copy แล้ว — วาง LINE ได้เลย");
+    });
+  } else {
+    var ta = document.createElement("textarea");
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    document.body.removeChild(ta);
+    showToast("✅ Copy แล้ว — วาง LINE ได้เลย");
+  }
+}
+
+// ── RESET ─────────────────────────────────────────────────────────
+function confirmReset() {
+  if (confirm("Reset ทุกตัวนับ? ทำเมื่อเริ่มวันใหม่เท่านั้น")) {
+    state = freshState();
+    saveState();
+    document.getElementById("batchInput").value = "";
+    init();
+    showToast("🔄 Reset เรียบร้อย");
+  }
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────
+function showToast(msg) {
+  var t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(function(){ t.classList.remove("show"); }, 2500);
+}
+
+// ── SUBMIT TO SHEETS ─────────────────────────────────────────────
+function submitToSheets() {
+  if (!SHEETS_URL || SHEETS_URL.includes("YOUR_")) {
+    showToast("⚠️ ยังไม่ได้ตั้ง SHEETS_URL — Copy รายงานแทน");
+    copyReport();
+    return;
+  }
+
+  var batch = parseInt(document.getElementById("batchInput")?.value) || 0;
+  var totalSold = 0;
+  Object.values(state.counts).forEach(function(v){ totalSold += v; });
+
+  var payload = {
+    date:          getDateStr(),
+    checkpoint:    currentCP,
+    batchReceived: batch,
+    totalSold:     totalSold,
+    stockLeft:     batch - totalSold,
+    counts:        state.counts,
+    note:          ""
+  };
+
+  // show loading
+  var btn = document.querySelector(".btn-submit");
+  var orig = btn.textContent;
+  btn.textContent = "⏳ กำลังส่ง...";
+  btn.disabled = true;
+
+  fetch(SHEETS_URL, {
+    method: "POST",
+    mode: "no-cors",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  })
+  .then(function() {
+    showToast("✅ ส่ง Sheets แล้ว! LINE จะแจ้งถ้า stock ต่ำ");
+    btn.textContent = "✅ ส่งแล้ว";
+    setTimeout(function(){ btn.textContent = orig; btn.disabled = false; }, 3000);
+  })
+  .catch(function(err) {
+    // no-cors จะ throw แต่ Sheets อาจรับแล้ว — copy เป็น backup
+    showToast("📋 Copy รายงานสำรองแล้ว");
+    copyReport();
+    btn.textContent = orig;
+    btn.disabled = false;
+  });
+}
+
+// ── START ─────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
