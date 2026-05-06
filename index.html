@@ -122,11 +122,17 @@ textarea:focus{outline:none;border-color:var(--pk)}
 </div>
 
 <div class="store-wrap" id="storeWrap">
-  <div style="display:flex;align-items:center;gap:8px">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
     <span style="font-size:11px;color:var(--mu);white-space:nowrap">หน้าร้าน</span>
     <input id="storeName" type="text" placeholder="เช่น แฟชั่นไอส์แลนด์ · สาขา 1"
       style="flex:1;padding:6px 10px;background:var(--card);border:1px solid var(--bd);border-radius:8px;color:var(--cr);font-size:12px;font-family:inherit"
       oninput="saveStore()" value="">
+  </div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <span style="font-size:11px;color:var(--mu);white-space:nowrap">ผู้รายงาน</span>
+    <input id="reporterName" type="text" placeholder="ชื่อพนักงาน"
+      style="flex:1;padding:6px 10px;background:var(--card);border:1px solid var(--bd);border-radius:8px;color:var(--cr);font-size:12px;font-family:inherit"
+      oninput="saveReporter()">
   </div>
 </div>
 
@@ -162,14 +168,14 @@ textarea:focus{outline:none;border-color:var(--pk)}
   <div class="bx-hint" id="bHint"></div>
 </div>
 
-<div class="sh">เมนูประจำ<span class="sb" style="background:var(--ok-s);color:var(--ok)">5 รส</span></div>
+<div class="sh">เมนูประจำ<span class="sb" id="coreBadge" style="background:var(--ok-s);color:var(--ok)">5 รส</span></div>
 <div class="fl" id="coreList"></div>
 
-<div class="sh">เมนูหมุน — สัปดาห์นี้<span class="sb" id="rotBadge" style="background:var(--wa-s);color:var(--wa)">—</span></div>
+<div class="sh">เมนูหมุน + สเปเชียล<span class="sb" id="rotBadge" style="background:var(--wa-s);color:var(--wa)">—</span></div>
 <div class="fl" id="rotList"></div>
 
 <div id="dropSec" style="display:none">
-  <div class="sh">Weekend Drop<span class="sb" id="dropBadge" style="background:var(--pk-s);color:var(--pk-l)">Limited</span></div>
+  <div class="sh">วีคเอนด์ดรอป<span class="sb" id="dropBadge" style="background:var(--pk-s);color:var(--pk-l)">Limited</span></div>
   <div class="fl" id="dropList"></div>
 </div>
 
@@ -190,10 +196,6 @@ textarea:focus{outline:none;border-color:var(--pk)}
     </div>
   </div>
 
-  <div class="fld">
-    <div class="fl-lbl">บันทึก</div>
-    <textarea id="obs" placeholder="เช่น ลูกค้าถาม pistachio · sampling หมดเร็ว · display ล้ม"></textarea>
-  </div>
 </div>
 
 <div class="acts">
@@ -219,8 +221,8 @@ textarea:focus{outline:none;border-color:var(--pk)}
 <div class="toast" id="toast"></div>
 
 <script>
-var SHEETS_URL="https://script.google.com/macros/s/AKfycbxNqxziVIkFBT8_nj8fWhSk3rY_dUUOnItQ7SSaQw-3YhF8oikeNMnAcIX4OZsgR4M/exec";
-var MENU_URL  ="https://script.google.com/macros/s/AKfycbxNqxziVIkFBT8_nj8fWhSk3rY_dUUOnItQ7SSaQw-3YhF8oikeNMnAcIX4OZsgR4M/exec";
+var SHEETS_URL="https://script.google.com/macros/s/AKfycbwfpMz6QHsm_mIMxgSyppgte0Qg0YMx7Fr16VZ6SlHLC6GL-x1XScRSZBfmqBjzPfhs/exec";
+var MENU_URL  ="https://script.google.com/macros/s/AKfycbwfpMz6QHsm_mIMxgSyppgte0Qg0YMx7Fr16VZ6SlHLC6GL-x1XScRSZBfmqBjzPfhs/exec";
 
 // flag thresholds
 var T_OK=15, T_WARN=7, T_CRIT=3; // >15 ปกติ · 7-15 เหลือน้อย · <3 เหลือน้อยมาก · 0 หมด
@@ -285,6 +287,13 @@ function saveStore(){
 }
 function getStore(){
   return localStorage.getItem("bbd_store")||"ไม่ระบุสาขา";
+}
+function saveReporter(){
+  var v=el("reporterName")?el("reporterName").value:"";
+  localStorage.setItem("bbd_reporter",v);
+}
+function getReporter(){
+  return localStorage.getItem("bbd_reporter")||"";
 }
 
 function tick(){
@@ -450,7 +459,7 @@ function buildRpt(){
 
 function openRpt(){
   var d=buildRpt();
-  el("moSub").textContent=getStore()+" · "+el("liveDate").textContent+" · "+curCP.lbl;
+  el("moSub").textContent=getStore()+(getReporter()?" · "+getReporter():"")+" · "+el("liveDate").textContent+" · "+curCP.lbl;
   var html="";
   if(d.rows.length===0){
     html='<div style="padding:12px 0;font-size:12px;color:var(--mu)">ยังไม่ได้กรอกจำนวนเหลือ</div>';
@@ -469,6 +478,7 @@ function openRpt(){
   var now=el("liveDate").textContent;
   var txt="รายงาน BBD Kiosk\n";
   txt+="หน้าร้าน: "+getStore()+"\n";
+  if(getReporter()) txt+="ผู้รายงาน: "+getReporter()+"\n";
   if(curTr) txt+="ลูกค้า: "+curTr+"\n";
   txt+=now+" · "+curCP.lbl+"\n";
   txt+="─────────────────\n";
@@ -500,12 +510,12 @@ function submit(){
   btn.textContent="กำลังส่ง...";btn.disabled=true;
   fetch(SHEETS_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},
     body:JSON.stringify({date:el("liveDate").textContent,time:el("liveTime").textContent,
-      store:getStore(),checkpoint:curCP.lbl,batchReceived:d.batch,
+      store:getStore(),reporter:getReporter(),checkpoint:curCP.lbl,batchReceived:d.batch,
       totalSold:d.totS,totalRemaining:d.totR,
       sellThrough:d.batch>0?Math.round(d.totS/d.batch*100):0,remaining:S.rem,
       traffic:curTr,batch2Decision:curB2,batch2Qty:curQty,
       observation:el("obs").value,tomorrowBatch:Math.round(d.totS*1.2),
-      skuDetail:d.rows.map(function(r){return r.name+":"+r.rem;}).join(", ")})
+      skuDetail:d.rows.filter(function(r){return r.rem!==null&&r.rem!==undefined;}).map(function(r){return r.name+":"+r.rem;}).join(", ")})
   }).then(function(){
     toast("ส่ง Sheets แล้ว");
     btn.textContent="ส่งแล้ว · "+curCP.lbl;
