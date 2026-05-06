@@ -37,7 +37,6 @@ input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-
 .sv{font-size:18px;font-weight:700;line-height:1;margin-bottom:1px}
 .sl{font-size:9px;color:var(--mu)}
 
-.menu-st{font-size:10px;color:var(--mu);padding:4px 14px;background:var(--sf);border-bottom:1px solid var(--bd);text-align:center;min-height:22px}
 
 .bx{margin:10px 10px 0;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:10px 13px}
 .bx-row{display:flex;align-items:center;gap:10px}
@@ -148,8 +147,6 @@ textarea:focus{outline:none;border-color:var(--pk)}
   <div class="sc"><div class="sv" id="sumP" style="color:var(--cr)">—</div><div class="sl">sell-thru</div></div>
 </div>
 
-<div class="menu-st" id="menuSt"></div>
-
 <div class="fld" style="margin:10px 10px 0;border-radius:12px">
   <div class="fl-lbl">ลูกค้า ณ เวลานี้</div>
   <div class="pills">
@@ -160,6 +157,11 @@ textarea:focus{outline:none;border-color:var(--pk)}
   <div class="th-hint" id="trHint"></div>
 </div>
 
+<div class="fld" style="margin:10px 10px 0;border-radius:12px">
+  <div class="fl-lbl">บันทึก</div>
+  <textarea id="obs" placeholder="เช่น ลูกค้าถาม pistachio · sampling หมดเร็ว · display ล้ม"></textarea>
+</div>
+
 <div class="bx">
   <div class="bx-row">
     <div class="bx-lbl">จำนวนรับจากครัวทั้งหมด<br><small>บวกอัตโนมัติจากรอบ 10:00 เท่านั้น · ล็อกไว้ตลอดวัน</small></div>
@@ -168,6 +170,25 @@ textarea:focus{outline:none;border-color:var(--pk)}
   <div class="bx-hint" id="bHint"></div>
 </div>
 
+
+<div class="fld" id="b2Card" style="display:none;margin:10px 10px 0;border-radius:12px">
+  <div class="fl-lbl">ต้องการสั่งโดนัทมาเพิ่มไหม<span class="fl-sub">ตัดสินใจก่อน 14:00</span></div>
+  <div class="pills">
+    <div class="pill" data-g="b2" data-v="ต้องการ" onclick="setPill(this,'s-ok')">ต้องการ</div>
+    <div class="pill" data-g="b2" data-v="ไม่ต้อง" onclick="setPill(this,'s-wa')">ไม่ต้อง</div>
+    <div class="pill" data-g="b2" data-v="รอดู"   onclick="setPill(this,'s-pk')">รอดู</div>
+  </div>
+  <div class="qty-row" id="qtyRow" style="display:none">
+    <div style="font-size:11px;color:var(--mu);width:100%">สั่งกี่ชิ้น</div>
+    <div class="qb" data-q="25" onclick="setQty(this)">25</div>
+    <div class="qb" data-q="30" onclick="setQty(this)">30</div>
+    <div class="qb" data-q="40" onclick="setQty(this)">40</div>
+    <div class="qb" data-q="50" onclick="setQty(this)">50</div>
+  </div>
+  <div id="b2Warning" style="display:none;margin-top:6px;font-size:11px;color:var(--da);font-weight:600">
+    กรุณาเลือกก่อนส่งรายงาน
+  </div>
+</div>
 <div class="sh">เมนูประจำ<span class="sb" id="coreBadge" style="background:var(--ok-s);color:var(--ok)">5 รส</span></div>
 <div class="fl" id="coreList"></div>
 
@@ -177,25 +198,6 @@ textarea:focus{outline:none;border-color:var(--pk)}
 <div id="dropSec" style="display:none">
   <div class="sh">วีคเอนด์ดรอป<span class="sb" id="dropBadge" style="background:var(--pk-s);color:var(--pk-l)">Limited</span></div>
   <div class="fl" id="dropList"></div>
-</div>
-
-<div class="extras">
-  <div class="fld" id="b2Card" style="display:none">
-    <div class="fl-lbl">ต้องการสั่งโดนัทมาเพิ่มไหม<span class="fl-sub">ตัดสินใจก่อน 14:00</span></div>
-    <div class="pills">
-      <div class="pill" data-g="b2" data-v="ต้องการ" onclick="setPill(this,'s-ok')">ต้องการ</div>
-      <div class="pill" data-g="b2" data-v="ไม่ต้อง" onclick="setPill(this,'s-wa')">ไม่ต้อง</div>
-      <div class="pill" data-g="b2" data-v="รอดู"   onclick="setPill(this,'s-pk')">รอดู</div>
-    </div>
-    <div class="qty-row" id="qtyRow" style="display:none">
-      <div style="font-size:11px;color:var(--mu);width:100%">สั่งกี่ชิ้น</div>
-      <div class="qb" data-q="25" onclick="setQty(this)">25</div>
-      <div class="qb" data-q="30" onclick="setQty(this)">30</div>
-      <div class="qb" data-q="40" onclick="setQty(this)">40</div>
-      <div class="qb" data-q="50" onclick="setQty(this)">50</div>
-    </div>
-  </div>
-
 </div>
 
 <div class="acts">
@@ -222,8 +224,6 @@ textarea:focus{outline:none;border-color:var(--pk)}
 
 <script>
 var SHEETS_URL="https://script.google.com/macros/s/AKfycbwfpMz6QHsm_mIMxgSyppgte0Qg0YMx7Fr16VZ6SlHLC6GL-x1XScRSZBfmqBjzPfhs/exec";
-var MENU_URL  ="https://script.google.com/macros/s/AKfycbwfpMz6QHsm_mIMxgSyppgte0Qg0YMx7Fr16VZ6SlHLC6GL-x1XScRSZBfmqBjzPfhs/exec";
-
 // flag thresholds
 var T_OK=15, T_WARN=7, T_CRIT=3; // >15 ปกติ · 7-15 เหลือน้อย · <3 เหลือน้อยมาก · 0 หมด
 
@@ -394,13 +394,13 @@ function onBatch(){
     });
     if(hasAny){S.batch=tot;S.batchLocked=tot;save();}
     el("bIn").textContent=hasAny?tot:"—";
-    if(hasAny) el("bHint").innerHTML='รับมาทั้งหมด <b>'+tot+'</b> ชิ้น &nbsp;·&nbsp; batch พรุ่งนี้แนะนำ ~<b>'+Math.round(tot*1.2)+'</b> ชิ้น';
+    if(hasAny) el("bHint").innerHTML='รับมาทั้งหมด <b>'+tot+'</b> ชิ้น';
     else el("bHint").innerHTML="กรอกจำนวนแต่ละรสด้านล่างก่อน";
   } else {
     // รอบอื่น — แสดง locked batch จากรอบ 10:00 เท่านั้น
     var locked=S.batchLocked||S.batch||0;
     el("bIn").textContent=locked||"—";
-    if(locked) el("bHint").innerHTML='ยอดรับจากรอบ 10:00: <b>'+locked+'</b> ชิ้น (ล็อกแล้ว)';
+    if(locked) el("bHint").innerHTML='รับมาทั้งหมด <b>'+locked+'</b> ชิ้น (ล็อกจากรอบ 10:00)';
     else el("bHint").innerHTML="ยังไม่มีข้อมูลรอบ 10:00";
   }
   calcSummary();
@@ -435,7 +435,7 @@ function setPill(el_,selCls){
   });
   el_.classList.add(selCls);
   if(g==="tr"){curTr=v;el("trHint").textContent=TH[v]||"";}
-  if(g==="b2"){curB2=v;el("qtyRow").style.display=v==="ต้องการ"?"flex":"none";if(v!=="ต้องการ")curQty="";}
+  if(g==="b2"){curB2=v;el("qtyRow").style.display=v==="ต้องการ"?"flex":"none";if(v!=="ต้องการ")curQty="";var w=el("b2Warning");if(w)w.style.display="none";}
 }
 
 function setQty(el_){
@@ -504,6 +504,13 @@ function openRpt(){
 function closeOv(e){if(!e||e.target===el("ov"))el("ov").classList.remove("open");}
 
 function submit(){
+  // ถ้าเป็นรอบ 14:00 ต้องเลือก b2 ก่อน
+  if(curCP.b2 && !curB2){
+    var w=el("b2Warning");if(w) w.style.display="";
+    var b2c=el("b2Card");if(b2c) b2c.scrollIntoView({behavior:"smooth",block:"center"});
+    toast("กรุณาเลือก 'ต้องการสั่งโดนัทมาเพิ่มไหม' ก่อน");
+    return;
+  }
   var d=buildRpt(),txt=openRpt();
   if(!SHEETS_URL||SHEETS_URL.includes("YOUR_")){toast("Copy แล้ว — วาง LINE ได้เลย");return;}
   var btn=document.querySelector(".btn-m");
@@ -540,22 +547,17 @@ function toast(msg){
   setTimeout(function(){t.classList.remove("show");},2600);
 }
 
-function fetchMenu(){
-  if(!MENU_URL||MENU_URL.includes("YOUR_")){el("menuSt").textContent="เมนู default";return;}
-  el("menuSt").textContent="กำลังโหลดเมนู...";
-  fetch(MENU_URL+"?action=menu").then(function(r){return r.json();})
-    .then(function(data){
-      if(data.core&&data.core.length){
-        MENU.core=data.core;MENU.rotating=data.rotating||[];MENU.drop=data.drop||[];
-        renderMenus();calcSummary();el("menuSt").textContent="เมนูอัปเดทแล้ว";
-      }
-    }).catch(function(){el("menuSt").textContent="เมนู default";});
-}
 
 tick();renderCPs();renderMenus();calcSummary();
-onBatch();
-fetchMenu();
-setInterval(fetchMenu,5*60*1000);
+// โหลดชื่อหน้าร้านและผู้รายงาน
+var _sn=localStorage.getItem("bbd_store")||"";
+if(_sn&&el("storeName")) el("storeName").value=_sn;
+var _rn=localStorage.getItem("bbd_reporter")||"";
+if(_rn&&el("reporterName")) el("reporterName").value=_rn;
+var _locked=S.batchLocked||S.batch||0;
+el("bIn").textContent=_locked||"—";
+if(_locked) el("bHint").innerHTML='รับมาทั้งหมด <b>'+_locked+'</b> ชิ้น (ล็อกจากรอบ 10:00)';
+calcSummary();
 </script>
 </body>
 </html>
