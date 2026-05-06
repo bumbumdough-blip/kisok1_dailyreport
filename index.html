@@ -144,6 +144,16 @@ textarea:focus{outline:none;border-color:var(--pk)}
 
 <div class="menu-st" id="menuSt"></div>
 
+<div class="fld" style="margin:10px 10px 0;border-radius:12px">
+  <div class="fl-lbl">ลูกค้า ณ เวลานี้</div>
+  <div class="pills">
+    <div class="pill" data-g="tr" data-v="คนเยอะมาก" onclick="setPill(this,'s-ok')">เยอะมาก</div>
+    <div class="pill" data-g="tr" data-v="ปกติ"       onclick="setPill(this,'s-pk')">ปกติ</div>
+    <div class="pill" data-g="tr" data-v="น้อย"       onclick="setPill(this,'s-wa')">น้อย</div>
+  </div>
+  <div class="th-hint" id="trHint"></div>
+</div>
+
 <div class="bx">
   <div class="bx-row">
     <div class="bx-lbl">จำนวนรับจากครัวทั้งหมด<br><small>บวกอัตโนมัติจากรอบ 10:00 เท่านั้น · ล็อกไว้ตลอดวัน</small></div>
@@ -164,16 +174,6 @@ textarea:focus{outline:none;border-color:var(--pk)}
 </div>
 
 <div class="extras">
-  <div class="fld">
-    <div class="fl-lbl">ลูกค้า ณ เวลานี้</div>
-    <div class="pills">
-      <div class="pill" data-g="tr" data-v="คนเยอะมาก" onclick="setPill(this,'s-ok')">เยอะมาก</div>
-      <div class="pill" data-g="tr" data-v="ปกติ"       onclick="setPill(this,'s-pk')">ปกติ</div>
-      <div class="pill" data-g="tr" data-v="น้อย"       onclick="setPill(this,'s-wa')">น้อย</div>
-    </div>
-    <div class="th-hint" id="trHint"></div>
-  </div>
-
   <div class="fld" id="b2Card" style="display:none">
     <div class="fl-lbl">ต้องการสั่งโดนัทมาเพิ่มไหม<span class="fl-sub">ตัดสินใจก่อน 14:00</span></div>
     <div class="pills">
@@ -361,7 +361,7 @@ function onRem(id,val){
   if(card) card.className="fc"+(v===0?" out":(v!==null&&v<=T_OK?" warn":""));
   if(flag){flag.className="ff "+f.cls;flag.textContent=f.txt;}
   if(bar)  bar.style.width=Math.round(pct*100)+"%";
-  if(curCP.id==="c1") 
+  if(curCP.id==="c1") onBatch();
   calcSummary();
 }
 
@@ -390,13 +390,16 @@ function onBatch(){
 
 function calcSummary(){
   var totRem=0,has=false;
-  all().forEach(function(item){var r=S.rem[item.id];if(r!==null&&r!==undefined){totRem+=parseInt(r)||0;has=true;}});
+  all().forEach(function(item){
+    var r=S.rem[item.id];
+    if(r!==null&&r!==undefined){totRem+=(parseInt(r)||0);has=true;}
+  });
   var locked=S.batchLocked||S.batch||0;
   var sold=locked>0&&has?Math.max(locked-totRem,0):0;
   var pct=locked>0&&has?Math.round(sold/locked*100)+"%":"—";
   el("sumB").textContent=locked||"—";
   el("sumL").textContent=has?totRem:"—";
-  el("sumS").textContent=sold||"—";
+  el("sumS").textContent=locked>0&&has?sold:"—";
   el("sumP").textContent=pct;
   if(has){el("sumL").style.color=totRem<10?"var(--da)":totRem<25?"var(--wa)":"var(--pk-ll)";}
 }
@@ -423,46 +426,56 @@ function setQty(el_){
 }
 
 function buildRpt(){
-  var batch=S.batch||0,per=batch>0?Math.round(batch/all().length):0;
+  var locked=S.batchLocked||S.batch||0;
   var totR=0,totS=0,rows=[];
   all().forEach(function(item){
-    var rem=S.rem[item.id]!==null&&S.rem[item.id]!==undefined?S.rem[item.id]:per;
-    var sold=per>0?Math.max(per-rem,0):0;
-    totR+=rem;totS+=sold;
-    rows.push({name:item.name,rem:rem,sold:sold,color:item.color});
+    var rem=S.rem[item.id];
+    // ถ้าไม่ได้กรอก (null/undefined) → ข้ามออกจากรายงาน
+    if(rem===null||rem===undefined) return;
+    totR+=rem;
+    rows.push({name:item.name,rem:rem,color:item.color});
   });
-  return{rows:rows,totR:totR,totS:totS,batch:batch};
+  totS=locked>0&&totR>=0?Math.max(locked-totR,0):0;
+  return{rows:rows,totR:totR,totS:totS,batch:locked};
 }
 
 function openRpt(){
   var d=buildRpt();
   el("moSub").textContent=getStore()+" · "+el("liveDate").textContent+" · "+curCP.lbl;
   var html="";
-  d.rows.forEach(function(r){
-    var f=getFlag(r.rem);
-    html+='<div class="rr"><span class="rr-name">'+r.name+'</span>'+
-      '<div class="rr-r"><span class="rr-val">เหลือ '+r.rem+'</span>'+
-      '<span class="rr-flag '+f.cls+'">'+f.txt+'</span></div></div>';
-  });
+  if(d.rows.length===0){
+    html='<div style="padding:12px 0;font-size:12px;color:var(--mu)">ยังไม่ได้กรอกจำนวนเหลือ</div>';
+  } else {
+    d.rows.forEach(function(r){
+      var f=getFlag(r.rem);
+      html+='<div class="rr"><span class="rr-name">'+r.name+'</span>'+
+        '<div class="rr-r"><span class="rr-val">เหลือ '+r.rem+'</span>'+
+        '<span class="rr-flag '+f.cls+'">'+f.txt+'</span></div></div>';
+    });
+  }
   el("moRows").innerHTML=html;
-  el("totL").textContent=d.totR+" ชิ้น";
-  el("totS").textContent=d.totS+" ชิ้น";
-  var pct=d.batch>0?Math.round(d.totS/d.batch*100)+"%":"—";
+  el("totL").textContent=d.rows.length>0?d.totR+" ชิ้น":"—";
+  el("totS").textContent=d.batch>0&&d.rows.length>0?d.totS+" ชิ้น":"—";
+  var pct=d.batch>0&&d.rows.length>0?Math.round(d.totS/d.batch*100)+"%":"—";
+  var now=el("liveDate").textContent;
   var txt="รายงาน BBD Kiosk\n";
   txt+="หน้าร้าน: "+getStore()+"\n";
-  txt+=el("liveDate").textContent+" · "+curCP.lbl+"\n";
-  txt+="─────────────────\n";
-  d.rows.forEach(function(r){
-    var mk=r.rem===0?"[หมด]":r.rem<T_CRIT?"[น้อยมาก]":r.rem<=T_OK?"[น้อย]":"[ปกติ]";
-    txt+="- "+r.name+": เหลือ "+r.rem+" ชิ้น "+mk+"\n";
-  });
-  txt+="─────────────────\n";
-  txt+="เหลือรวม: "+d.totR+" | ขาย: "+d.totS+" | sell-thru: "+pct+"\n";
   if(curTr) txt+="ลูกค้า: "+curTr+"\n";
-  if(curB2) txt+="Batch 2: "+curB2+(curQty?" ("+curQty+" ชิ้น)":"")+"\n";
+  txt+=now+" · "+curCP.lbl+"\n";
+  txt+="─────────────────\n";
+  if(d.rows.length>0){
+    d.rows.forEach(function(r){
+      var mk=r.rem===0?"[หมด]":r.rem<T_CRIT?"[น้อยมาก]":r.rem<=T_OK?"[น้อย]":"[ปกติ]";
+      txt+="- "+r.name+": "+r.rem+" ชิ้น "+mk+"\n";
+    });
+    txt+="─────────────────\n";
+    txt+="เหลือรวม: "+d.totR+" ชิ้น";
+    if(d.batch>0) txt+=" | ขาย: "+d.totS+" | sell-thru: "+pct;
+    txt+="\n";
+  }
+  if(curB2) txt+="สั่งเพิ่ม: "+curB2+(curQty?" ("+curQty+" ชิ้น)":"")+"\n";
   var obs=el("obs").value;
-  if(obs) txt+="บันทึก: "+obs+"\n";
-  txt+="batch พรุ่งนี้แนะนำ: ~"+Math.round(d.totS*1.2)+" ชิ้น";
+  if(obs) txt+="บันทึก: "+obs;
   el("cbox").textContent=txt;
   el("ov").classList.add("open");
   if(navigator.clipboard) navigator.clipboard.writeText(txt).catch(function(){});
