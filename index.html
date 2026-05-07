@@ -127,11 +127,17 @@ textarea:focus{outline:none;border-color:var(--pk)}
       style="flex:1;padding:6px 10px;background:var(--card);border:1px solid var(--bd);border-radius:8px;color:var(--cr);font-size:12px;font-family:inherit"
       oninput="saveStore()" value="">
   </div>
-  <div style="display:flex;align-items:center;gap:8px">
+  <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
     <span style="font-size:11px;color:var(--mu);white-space:nowrap">ผู้รายงาน</span>
     <input id="reporterName" type="text" placeholder="ชื่อพนักงาน"
       style="flex:1;padding:6px 10px;background:var(--card);border:1px solid var(--bd);border-radius:8px;color:var(--cr);font-size:12px;font-family:inherit"
       oninput="saveReporter()">
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
+    <span style="font-size:11px;color:var(--mu);white-space:nowrap">รหัส PIN</span>
+    <input id="pinInput" type="password" inputmode="numeric" maxlength="4" placeholder="••••"
+      style="width:80px;padding:6px 10px;background:var(--card);border:1px solid var(--bd);border-radius:8px;color:var(--cr);font-size:16px;font-weight:700;text-align:center;letter-spacing:4px;font-family:inherit">
+    <span id="pinStatus" style="font-size:11px;color:var(--mu)"></span>
   </div>
 </div>
 
@@ -189,6 +195,26 @@ textarea:focus{outline:none;border-color:var(--pk)}
     กรุณาเลือกก่อนส่งรายงาน
   </div>
 </div>
+
+<div id="batch2Section" style="display:none;margin:6px 10px 0;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:10px 13px">
+  <div class="fl-lbl" style="margin-bottom:8px">โดนัทรอบ 2 — รับจากครัว</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+    <div>
+      <div style="font-size:11px;color:var(--mu);margin-bottom:4px">เวลาที่รับ</div>
+      <input id="batch2Time" type="time"
+        style="width:100%;padding:7px 8px;background:var(--sf);border:1px solid var(--bd);border-radius:8px;color:var(--pk-ll);font-size:14px;font-weight:700;font-family:inherit"
+        onchange="updateBatch2()">
+    </div>
+    <div>
+      <div style="font-size:11px;color:var(--mu);margin-bottom:4px">จำนวนที่รับมา (ชิ้น)</div>
+      <input id="batch2Qty2" type="number" inputmode="numeric" placeholder="เช่น 40"
+        style="width:100%;padding:7px 8px;background:var(--sf);border:1px solid var(--bd);border-radius:8px;color:var(--pk-ll);font-size:16px;font-weight:700;text-align:center"
+        oninput="updateBatch2()">
+    </div>
+  </div>
+  <div id="batch2Summary" style="font-size:11px;color:var(--mu);line-height:1.6"></div>
+</div>
+
 <div class="sh">เมนูประจำ<span class="sb" id="coreBadge" style="background:var(--ok-s);color:var(--ok)">5 รส</span></div>
 <div class="fl" id="coreList"></div>
 
@@ -223,14 +249,14 @@ textarea:focus{outline:none;border-color:var(--pk)}
 <div class="toast" id="toast"></div>
 
 <script>
-var SHEETS_URL="https://script.google.com/macros/s/AKfycbwfpMz6QHsm_mIMxgSyppgte0Qg0YMx7Fr16VZ6SlHLC6GL-x1XScRSZBfmqBjzPfhs/exec";
+var SHEETS_URL="YOUR_WEB_APP_URL_HERE";
 // flag thresholds
 var T_OK=15, T_WARN=7, T_CRIT=3; // >15 ปกติ · 7-15 เหลือน้อย · <3 เหลือน้อยมาก · 0 หมด
 
 var CPS=[
   {id:"c1",lbl:"10:00",note:"เปิดร้าน"},
   {id:"c2",lbl:"14:00",note:"ตัดสินใจสั่งโดนัทเพิ่มก่อน 14:00",b2:true},
-  {id:"c3",lbl:"16:45",note:"รอบบ่าย"},
+  {id:"c3",lbl:"16:45",note:"รอบบ่าย",b2receive:true},
   {id:"c4",lbl:"19:00",note:"ช่วงครอบครัว"},
   {id:"c5",lbl:"21:00",note:"ปิดร้าน"},
 ];
@@ -322,6 +348,9 @@ function renderCPs(){
       document.querySelectorAll(".cp-btn").forEach(function(e){e.classList.remove("active");});
       b.classList.add("active");curCP=cp;
       el("b2Card").style.display=cp.b2?"":"none";
+      // แสดง section รับโดนัทรอบ 2 เฉพาะรอบ 16:45 และถ้ามีการสั่งรอบ 2
+      var bs=el("batch2Section");
+      if(bs) bs.style.display=(cp.b2receive&&S.batch2Requested)?"":"none";
     };
     w.appendChild(b);
   });
@@ -392,7 +421,7 @@ function onBatch(){
       var r=S.rem[item.id];
       if(r!==null&&r!==undefined){tot+=parseInt(r)||0;hasAny=true;}
     });
-    if(hasAny){S.batch=tot;S.batchLocked=tot;save();}
+    if(hasAny){S.batch=tot;S.batchLocked=tot;S.batchMorning=tot;save();}
     el("bIn").textContent=hasAny?tot:"—";
     if(hasAny) el("bHint").innerHTML='รับมาทั้งหมด <b>'+tot+'</b> ชิ้น';
     else el("bHint").innerHTML="กรอกจำนวนแต่ละรสด้านล่างก่อน";
@@ -402,6 +431,37 @@ function onBatch(){
     el("bIn").textContent=locked||"—";
     if(locked) el("bHint").innerHTML='รับมาทั้งหมด <b>'+locked+'</b> ชิ้น (ล็อกจากรอบ 10:00)';
     else el("bHint").innerHTML="ยังไม่มีข้อมูลรอบ 10:00";
+  }
+  calcSummary();
+}
+
+function updateBatch2(){
+  var qty  = parseInt(el("batch2Qty2")?el("batch2Qty2").value:0)||0;
+  var time = el("batch2Time")?el("batch2Time").value:"";
+  S.batch2Qty  = qty;
+  S.batch2Time = time;
+  // batchLocked = รอบเช้า + รอบ 2
+  var morning = S.batchMorning || S.batchLocked || 0;
+  var total   = morning + qty;
+  S.batchLocked = total;
+  S.batch       = total;
+  save();
+  // update display
+  el("bIn").textContent = total || "—";
+  if(total>0){
+    var hint = 'รับมาทั้งหมด <b>'+total+'</b> ชิ้น';
+    if(morning>0 && qty>0) hint += ' (เช้า '+morning+' + รอบ 2: '+qty+' ชิ้น'+(time?' เวลา '+time:'')+')';
+    el("bHint").innerHTML = hint;
+  }
+  // update summary card
+  var bs = el("batch2Summary");
+  if(bs){
+    if(qty>0){
+      bs.innerHTML = 'เช้า: <b>'+morning+'</b> ชิ้น &nbsp;+&nbsp; รอบ 2: <b>'+qty+'</b> ชิ้น'+(time?' เวลา <b>'+time+'</b>':'')+' &nbsp;=&nbsp; รวม <b>'+total+'</b> ชิ้น';
+      bs.style.color='var(--pk-l)';
+    } else {
+      bs.innerHTML = '';
+    }
   }
   calcSummary();
 }
@@ -435,7 +495,16 @@ function setPill(el_,selCls){
   });
   el_.classList.add(selCls);
   if(g==="tr"){curTr=v;el("trHint").textContent=TH[v]||"";}
-  if(g==="b2"){curB2=v;el("qtyRow").style.display=v==="ต้องการ"?"flex":"none";if(v!=="ต้องการ")curQty="";var w=el("b2Warning");if(w)w.style.display="none";}
+  if(g==="b2"){
+    curB2=v;
+    el("qtyRow").style.display=v==="ต้องการ"?"flex":"none";
+    if(v!=="ต้องการ")curQty="";
+    var w=el("b2Warning");if(w)w.style.display="none";
+    // show batch2 input section only when ต้องการ
+    // batch2Section แสดงที่รอบ 16:45 เท่านั้น ไม่ใช่ตรงนี้
+    if(v==="ต้องการ"){ S.batch2Requested=true;save(); }
+    else { S.batch2Qty=0;S.batch2Time="";S.batch2Requested=false;updateBatch2(); }
+  }
 }
 
 function setQty(el_){
@@ -488,7 +557,10 @@ function openRpt(){
       txt+="- "+r.name+": "+r.rem+" ชิ้น "+mk+"\n";
     });
     txt+="─────────────────\n";
-    txt+="เหลือรวม: "+d.totR+" ชิ้น";
+    txt+="รับมาทั้งหมด: "+(S.batchLocked||0)+" ชิ้น";
+  if(S.batch2Qty>0) txt+=" (เช้า "+(S.batchMorning||0)+" + รอบ 2: "+S.batch2Qty+" ชิ้น"+(S.batch2Time?" เวลา "+S.batch2Time:"")+")";
+  txt+="\n";
+  txt+="เหลือรวม: "+d.totR+" ชิ้น";
     if(d.batch>0) txt+=" | ขาย: "+d.totS+" | sell-thru: "+pct;
     txt+="\n";
   }
@@ -503,7 +575,19 @@ function openRpt(){
 
 function closeOv(e){if(!e||e.target===el("ov"))el("ov").classList.remove("open");}
 
+var CORRECT_PIN = "8313";
+
 function submit(){
+  // ตรวจสอบ PIN
+  var pin = el("pinInput")?el("pinInput").value:"";
+  if(pin !== CORRECT_PIN){
+    var ps=el("pinStatus");
+    if(ps){ps.textContent="รหัสไม่ถูกต้อง";ps.style.color="var(--da)";}
+    if(el("pinInput")) el("pinInput").focus();
+    toast("กรุณาใส่รหัส PIN ให้ถูกต้อง");
+    return;
+  }
+  var ps=el("pinStatus");if(ps){ps.textContent="✓";ps.style.color="var(--ok)";}
   // ถ้าเป็นรอบ 14:00 ต้องเลือก b2 ก่อน
   if(curCP.b2 && !curB2){
     var w=el("b2Warning");if(w) w.style.display="";
@@ -516,8 +600,8 @@ function submit(){
   var btn=document.querySelector(".btn-m");
   btn.textContent="กำลังส่ง...";btn.disabled=true;
   fetch(SHEETS_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({date:el("liveDate").textContent,time:el("liveTime").textContent,
-      store:getStore(),reporter:getReporter(),checkpoint:curCP.lbl,batchReceived:d.batch,
+    body:JSON.stringify({key:"8313",date:el("liveDate").textContent,time:el("liveTime").textContent,
+      store:getStore(),reporter:getReporter(),checkpoint:curCP.lbl,batchReceived:d.batch,batch2Qty:S.batch2Qty||0,batch2Time:S.batch2Time||"",batchMorning:S.batchMorning||0,
       totalSold:d.totS,totalRemaining:d.totR,
       sellThrough:d.batch>0?Math.round(d.totS/d.batch*100):0,remaining:S.rem,
       traffic:curTr,batch2Decision:curB2,batch2Qty:curQty,
@@ -558,6 +642,15 @@ var _locked=S.batchLocked||S.batch||0;
 el("bIn").textContent=_locked||"—";
 if(_locked) el("bHint").innerHTML='รับมาทั้งหมด <b>'+_locked+'</b> ชิ้น (ล็อกจากรอบ 10:00)';
 calcSummary();
+// restore batch2 if already entered today
+if(S.batch2Qty>0){
+  if(el("batch2Qty2")) el("batch2Qty2").value=S.batch2Qty;
+  if(el("batch2Time")&&S.batch2Time) el("batch2Time").value=S.batch2Time;
+  updateBatch2();
+}
+// batch2Section แสดงเฉพาะรอบ 16:45 และถ้ามีการสั่งรอบ 2
+var bs=el("batch2Section");
+if(bs) bs.style.display=(curCP.b2receive&&S.batch2Requested)?"":"none";
 </script>
 </body>
 </html>
